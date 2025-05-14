@@ -50,7 +50,7 @@ const ProfilePage = () => {
   // Initialize form data when user data is available
   useEffect(() => {
     if (user) {
-      console.log('Setting up form with user data:', user);
+     
       const userData = {
         username: user.username || '',
         email: user.email || '',

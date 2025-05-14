@@ -5,10 +5,10 @@ export const authService = {
   login: async (credentials) => {
     try {
       const response = await api.post('/api/v1/auth/login', credentials);
-      console.log('Auth Service Login Response:', response); // Debug log
+      // Debug log
       return response.data || response;
     } catch (err) {
-      console.error('Auth Service Login Error:', err);
+     
       throw err;
     }
   },

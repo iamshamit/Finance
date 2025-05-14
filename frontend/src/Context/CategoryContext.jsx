@@ -13,16 +13,16 @@ export const CategoryProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await categoryService.getCategories();
-      console.log('Fetch Categories Response:', response);
+     
       
       // Extract the categories array from the response
       const categoriesData = response.categories || [];
-      console.log('Categories Data:', categoriesData);
+     
       
       setCategories(categoriesData);
       setError(null);
     } catch (err) {
-      console.error('Fetch Categories Error:', err);
+     
       setError(err.response?.data?.message || 'Failed to fetch categories');
       setCategories([]);
     } finally {
@@ -34,14 +34,14 @@ export const CategoryProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await categoryService.addCategory({ name, type });
-      console.log('Add Category Response in Context:', response);
+     
 
       // Refresh the categories list
       await fetchCategories();
       
       return { success: true, data: response.category || response };
     } catch (err) {
-      console.error('Add Category Error in Context:', err);
+     
       return { 
         success: false, 
         error: err.response?.data?.message || 'Failed to add category' 
@@ -61,7 +61,7 @@ export const CategoryProvider = ({ children }) => {
       
       return { success: true };
     } catch (err) {
-      console.error('Delete Category Error:', err);
+     
       return { 
         success: false, 
         error: err.response?.data?.message || 'Failed to delete category' 

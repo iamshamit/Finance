@@ -14,18 +14,18 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('Request:', config);
+   
     return config;
   },
   (error) => {
-    console.error('Request Error:', error);
+   
     return Promise.reject(error);
   }
 );
 
 api.interceptors.response.use(
   (response) => {
-    console.log('Response:', response);
+   
     return response.data;
   },
   (error) => {

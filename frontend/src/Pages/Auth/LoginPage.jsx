@@ -23,7 +23,7 @@ const LoginPage = () => {
 
     try {
       const result = await login(formData);
-      console.log('Login Result:', result); // Debug log
+      // Debug log
 
       if (result.success) {
         setIsLoading('success');
@@ -35,7 +35,7 @@ const LoginPage = () => {
         setIsLoading(false);
       }
     } catch (err) {
-      console.error('Login Error:', err);
+     
       setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }

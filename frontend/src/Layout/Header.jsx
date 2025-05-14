@@ -10,9 +10,9 @@ const Header = ({ toggleSidebar, isSidebarOpen, isMobile }) => {
   
   // Debug log
   useEffect(() => {
-    console.log('Header component - User:', user);
+   
     if (user && user.profilePicture) {
-      console.log('Profile Picture URL:', user.profilePicture);
+     
     }
   }, [user]);
   
@@ -79,7 +79,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, isMobile }) => {
               alt={user.username || 'User'} 
               className="w-full h-full object-cover"
               onError={(e) => {
-                console.error('Image failed to load:', e);
+               
                 setImageError(true);
               }}
             />

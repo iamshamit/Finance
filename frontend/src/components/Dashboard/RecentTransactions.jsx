@@ -1,15 +1,34 @@
-// src/Pages/Dashboard/components/RecentTransactions.jsx
+// src/components/Dashboard/RecentTransactions.jsx
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowRight, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const RecentTransactions = ({ transactions }) => {
-  const recentTransactions = transactions
-    .slice(0, 5) // Get only the 5 most recent transactions
-    .map(transaction => ({
-      ...transaction,
-      type: transaction.hasOwnProperty('income') ? 'income' : 'expense'
-    }));
+const RecentTransactions = ({ transactions, loading, showViewAll = false }) => {
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-[#121917] p-6 rounded-xl flex justify-center items-center h-64"
+      >
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+      </motion.div>
+    );
+  }
+
+  if (!transactions || transactions.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-[#121917] p-6 rounded-xl text-center"
+      >
+        <h2 className="text-xl font-semibold mb-6">Recent Transactions</h2>
+        <p className="text-gray-400 py-8">No transactions found. Start tracking your finances!</p>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -17,11 +36,19 @@ const RecentTransactions = ({ transactions }) => {
       animate={{ opacity: 1, y: 0 }}
       className="bg-[#121917] p-6 rounded-xl"
     >
-      <h2 className="text-xl font-semibold mb-6">Recent Transactions</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">Recent Transactions</h2>
+        {showViewAll && (
+          <Link to="/dashboard/transactions" className="text-emerald-500 hover:text-emerald-400 flex items-center gap-1 text-sm">
+            View All
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        )}
+      </div>
       
       <div className="space-y-4">
         <AnimatePresence>
-          {recentTransactions.map((transaction, index) => (
+          {transactions.map((transaction, index) => (
             <motion.div
               key={transaction._id}
               initial={{ opacity: 0, y: 20 }}
@@ -37,18 +64,16 @@ const RecentTransactions = ({ transactions }) => {
                     : 'bg-red-500/20'
                 }`}>
                   {transaction.type === 'income' ? (
-                    <TrendingUp className={`w-5 h-5 ${
-                      transaction.type === 'income' 
-                        ? 'text-emerald-500' 
-                        : 'text-red-500'
-                    }`} />
+                    <TrendingUp className="w-5 h-5 text-emerald-500" />
                   ) : (
                     <TrendingDown className="w-5 h-5 text-red-500" />
                   )}
                 </div>
                 <div>
                   <h3 className="font-medium">{transaction.title}</h3>
-                  <p className="text-sm text-gray-400">{transaction.category.name}</p>
+                  <p className="text-sm text-gray-400">
+                    {transaction.category?.name || 'Uncategorized'}
+                  </p>
                 </div>
               </div>
               <div className="text-right">
@@ -57,7 +82,7 @@ const RecentTransactions = ({ transactions }) => {
                     ? 'text-emerald-500' 
                     : 'text-red-500'
                 }`}>
-                  {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                  {transaction.type === 'income' ? '+' : '-'}₹{Number(transaction.amount).toFixed(2)}
                 </p>
                 <p className="text-sm text-gray-400">
                   {format(new Date(transaction.date), 'MMM dd, yyyy')}
@@ -66,6 +91,12 @@ const RecentTransactions = ({ transactions }) => {
             </motion.div>
           ))}
         </AnimatePresence>
+        
+        {transactions.length === 0 && (
+          <div className="text-center py-8 text-gray-400">
+            No recent transactions found.
+          </div>
+        )}
       </div>
     </motion.div>
   );

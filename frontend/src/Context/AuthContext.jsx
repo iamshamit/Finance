@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         const userData = await authService.getUser();
-        console.log('User data from API:', userData); // Debug log
+        // Debug log
         
         // Make sure we're setting the user correctly
         if (userData && userData.user) {
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (err) {
-      console.error('Check Auth Error:', err);
+     
       localStorage.removeItem('token');
       setUser(null);
     } finally {
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authService.login(credentials);
-      console.log('Login Response:', response); // Debug log
+      // Debug log
       
       // Check if the response contains a token
       if (response.token) {
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('No token received');
       }
     } catch (err) {
-      console.error('Login Error:', err);
+     
       return { 
         success: false, 
         error: err.response?.data?.message || 'Login failed. Please try again.' 
@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }) => {
 
   // Debug log whenever user changes
   useEffect(() => {
-    console.log('User state updated:', user);
+   
   }, [user]);
 
   return (

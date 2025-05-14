@@ -22,7 +22,7 @@ const IncomePage = () => {
 
   // Update filteredIncomes whenever incomes or filters change
   useEffect(() => {
-    console.log("Incomes updated:", incomes);
+   
     applyFilters();
   }, [incomes, filters]);
 
@@ -97,7 +97,7 @@ const IncomePage = () => {
 
       // Submit income
       const response = await addIncome(incomeData);
-      console.log('Add Income Response:', response);
+     
 
       if (response.success) {
         return { success: true };
@@ -105,7 +105,7 @@ const IncomePage = () => {
         throw new Error(response.error || 'Failed to add income');
       }
     } catch (err) {
-      console.error('Add Income Error:', err);
+     
       return { 
         success: false, 
         error: err.message || 'Failed to add income' 

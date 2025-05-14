@@ -22,7 +22,7 @@ const ExpensePage = () => {
 
   // Update filteredExpenses whenever expenses or filters change
   useEffect(() => {
-    console.log("Expenses updated:", expenses);
+   
     applyFilters();
   }, [expenses, filters]);
 
@@ -97,7 +97,7 @@ const ExpensePage = () => {
 
       // Submit expense
       const response = await addExpense(expenseData);
-      console.log('Add Expense Response:', response);
+     
 
       if (response.success) {
         return { success: true };
@@ -105,7 +105,7 @@ const ExpensePage = () => {
         throw new Error(response.error || 'Failed to add expense');
       }
     } catch (err) {
-      console.error('Add Expense Error:', err);
+     
       return { 
         success: false, 
         error: err.message || 'Failed to add expense' 

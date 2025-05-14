@@ -720,7 +720,7 @@ const LandingPage = () => {
                 Features
               </a>
               <a
-                href="https://github.com/iamshamit/spendwise"
+                href="https://github.com/iamshamit/finance"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-emerald-500 transition-colors"
@@ -735,7 +735,7 @@ const LandingPage = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
             className="border-t border-emerald-900/30 pt-8 flex flex-col md:flex-row justify-between items-center"
-          >
+          >~
             <p className="text-gray-500 text-sm mb-4 md:mb-0">
               © 2024 SpendWise. All rights reserved.
             </p>

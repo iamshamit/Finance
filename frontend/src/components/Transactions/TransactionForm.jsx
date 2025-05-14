@@ -1,8 +1,20 @@
 // src/components/Transactions/TransactionForm.jsx
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, IndianRupee, FileText, Tags, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Calendar, 
+  IndianRupee, 
+  FileText, 
+  Tags, 
+  Loader2, 
+  AlertCircle,
+  ChevronDown,
+  Check,
+  Plus,
+  Link as LinkIcon
+} from 'lucide-react';
 import { useCategories } from '../../Context/CategoryContext';
+import { Link } from 'react-router-dom';
 
 const TransactionForm = ({ onSubmit, type, isLoading }) => {
   const { categories } = useCategories();
@@ -14,16 +26,39 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
     date: new Date().toISOString().split('T')[0]
   });
   const [error, setError] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Filter categories based on the current transaction type
   const filteredCategories = categories.filter(category => category.type === type);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Get selected category name
+  const getSelectedCategoryName = () => {
+    if (!formData.category) return 'Select category';
+    const category = filteredCategories.find(cat => cat._id === formData.category);
+    return category ? category.name : 'Select category';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
     // Validate required fields
-    if (!formData.title || !formData.amount || !formData.category || !formData.date || !formData.description) {
+    if (!formData.title || !formData.amount || !formData.category || !formData.date) {
       setError('Please fill in all required fields');
       return;
     }
@@ -55,7 +90,6 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
       }
     } catch (err) {
       setError('An unexpected error occurred');
-      console.error('Form submission error:', err);
     }
   };
 
@@ -83,7 +117,7 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-gray-400 mb-2">Title *</label>
+          <label className="block text-gray-400 mb-2 text-sm">Title *</label>
           <div className="relative">
             <FileText className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -98,7 +132,7 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
         </div>
 
         <div>
-          <label className="block text-gray-400 mb-2">Amount *</label>
+          <label className="block text-gray-400 mb-2 text-sm">Amount *</label>
           <div className="relative">
             <IndianRupee className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -115,33 +149,99 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
         </div>
 
         <div>
-          <label className="block text-gray-400 mb-2">Category *</label>
-          <div className="relative">
-            <Tags className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <label className="block text-gray-400 mb-2 text-sm">Category *</label>
+          <div className="relative" ref={dropdownRef}>
+            <Tags className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 z-10" />
+            
+            {/* Custom Dropdown Button */}
+            <div
+              className={`w-full bg-[#1A231F] rounded-lg py-3 px-10 pr-4 flex justify-between items-center cursor-pointer border ${
+                dropdownOpen ? 'border-emerald-500' : 'border-transparent'
+              } hover:border-emerald-500/50 transition-colors`}
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              <span className={formData.category ? 'text-white' : 'text-gray-500'}>
+                {getSelectedCategoryName()}
+              </span>
+              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                dropdownOpen ? 'rotate-180' : ''
+              }`} />
+            </div>
+            
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {dropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute z-20 mt-1 w-full bg-[#1A231F] rounded-lg shadow-lg border border-emerald-900/50 max-h-60 overflow-y-auto"
+                >
+                  {filteredCategories.length > 0 ? (
+                    <>
+                      {filteredCategories.map((category) => (
+                        <div
+                          key={category._id}
+                          className={`px-4 py-2 cursor-pointer flex items-center justify-between hover:bg-emerald-500/10 transition-colors ${
+                            formData.category === category._id ? 'bg-emerald-500/20' : ''
+                          }`}
+                          onClick={() => {
+                            setFormData({ ...formData, category: category._id });
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          <span>{category.name}</span>
+                          {formData.category === category._id && (
+                            <Check className="w-4 h-4 text-emerald-500" />
+                          )}
+                        </div>
+                      ))}
+                      
+                      {/* Add Category Link */}
+                      <Link 
+                        to="/dashboard/categories"
+                        className="px-4 py-2 border-t border-emerald-900/50 flex items-center gap-2 text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add new category</span>
+                      </Link>
+                    </>
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p className="text-gray-400 mb-3">No {type} categories available.</p>
+                      <Link 
+                        to="/dashboard/categories"
+                        className="inline-flex items-center gap-2 text-emerald-500 hover:text-emerald-400 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Create a category</span>
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            {/* Hidden select for form submission */}
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full bg-[#1A231F] rounded-lg py-3 px-10 focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
+              className="opacity-0 absolute pointer-events-none"
               required
             >
               <option value="">Select category</option>
-              {filteredCategories.length > 0 ? (
-                filteredCategories.map((category) => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
-                  </option>
-                ))
-              ) : (
-                <option value="" disabled>
-                  No {type} categories available. Please create one first.
+              {filteredCategories.map((category) => (
+                <option key={category._id} value={category._id}>
+                  {category.name}
                 </option>
-              )}
+              ))}
             </select>
           </div>
         </div>
 
         <div>
-          <label className="block text-gray-400 mb-2">Date *</label>
+          <label className="block text-gray-400 mb-2 text-sm">Date *</label>
           <div className="relative">
             <Calendar className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -155,11 +255,11 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-gray-400 mb-2">Description</label>
+          <label className="block text-gray-400 mb-2 text-sm">Description</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full bg-[#1A231F] rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[100px]"
+            className="w-full bg-[#1A231F] rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[100px] resize-none"
             placeholder="Enter description (optional)"
           />
         </div>
@@ -170,7 +270,7 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
         whileTap={{ scale: 0.98 }}
         type="submit"
         disabled={isLoading || filteredCategories.length === 0}
-        className="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
@@ -188,11 +288,16 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
           className="mt-4 bg-amber-500/10 border border-amber-500 text-amber-500 px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <AlertCircle className="w-4 h-4" />
-          No {type} categories available. Please create a category first.
+          <div className="flex-1">
+            No {type} categories available. 
+            <Link to="/dashboard/categories" className="ml-1 underline hover:text-amber-400">
+              Create a category first
+            </Link>.
+          </div>
         </motion.div>
       )}
     </motion.form>
   );
 };
 
-export default TransactionForm;
+export default TransactionForm; 
