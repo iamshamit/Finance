@@ -41,7 +41,7 @@ app.get('/health', (req, res) => {
     status: 'ok',
     message: 'Server is running',
     environment: process.env.NODE_ENV || 'development',
-    allowedOrigins: allowedOrigins,
+    allowedOrigins: corsOptions.origin,
     mongoConnection: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
