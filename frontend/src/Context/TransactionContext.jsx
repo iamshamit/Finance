@@ -13,11 +13,24 @@ export const TransactionProvider = ({ children }) => {
   const fetchIncomes = async () => {
     try {
       setLoading(true);
-      const data = await transactionService.getIncomes();
+      const response = await transactionService.getIncomes();
+      console.log('Fetch Incomes Response:', response);
+      
+      // Extract data from response
+      let data;
+      if (response && response.data) {
+        data = response.data;
+      } else {
+        data = response;
+      }
+      
+      console.log('Processed Incomes Data:', data);
+      
       setIncomes(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.message);
+      console.error('Fetch Incomes Error:', err);
+      setError(err.response?.data?.message || 'Failed to fetch incomes');
       setIncomes([]);
     } finally {
       setLoading(false);
@@ -27,53 +40,111 @@ export const TransactionProvider = ({ children }) => {
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      const data = await transactionService.getExpenses();
+      const response = await transactionService.getExpenses();
+      console.log('Fetch Expenses Response:', response);
+      
+      // Extract data from response
+      let data;
+      if (response && response.data) {
+        data = response.data;
+      } else {
+        data = response;
+      }
+      
+      console.log('Processed Expenses Data:', data);
+      
       setExpenses(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.message);
+      console.error('Fetch Expenses Error:', err);
+      setError(err.response?.data?.message || 'Failed to fetch expenses');
       setExpenses([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const addIncome = async (data) => {
+  const addIncome = async (incomeData) => {
     try {
-      const newIncome = await transactionService.addIncome(data);
-      setIncomes(prev => [...prev, newIncome]);
+      setLoading(true);
+      console.log('Adding Income with data:', incomeData);
+      
+      const response = await transactionService.addIncome(incomeData);
+      console.log('Add Income Response:', response);
+      
+      // Try to extract the new transaction from the response
+      let newIncome;
+      if (response && response.data) {
+        newIncome = response.data;
+      } else if (response && response.success && response.data) {
+        newIncome = response.data;
+      } else {
+        newIncome = response;
+      }
+      
+      console.log('Processed New Income:', newIncome);
+      
+      // Add the new income to the state immediately if we have valid data
+      if (newIncome && newIncome._id) {
+        console.log('Adding new income to state:', newIncome);
+        setIncomes(prev => [...prev, newIncome]);
+      } else {
+        console.log('Invalid income data, fetching all incomes instead');
+        await fetchIncomes(); // Fallback to fetching all incomes
+      }
+      
       return { success: true, data: newIncome };
     } catch (err) {
-      return { success: false, error: err.response?.data?.message };
+      console.error('Add Income Error:', err);
+      return { 
+        success: false, 
+        error: err.response?.data?.message || 'Failed to add income' 
+      };
+    } finally {
+      setLoading(false);
     }
   };
 
   const addExpense = async (expenseData) => {
-  try {
-    setLoading(true);
-    const response = await transactionService.addExpense(expenseData);
-    
-    if (response.success) {
-      // Add the new expense to the state
-      if (response.expense) {
-        setExpenses(prev => [...prev, response.expense]);
+    try {
+      setLoading(true);
+      console.log('Adding Expense with data:', expenseData);
+      
+      const response = await transactionService.addExpense(expenseData);
+      console.log('Add Expense Response:', response);
+      
+      // Try to extract the new transaction from the response
+      let newExpense;
+      if (response && response.data) {
+        newExpense = response.data;
+      } else if (response && response.success && response.data) {
+        newExpense = response.data;
+      } else {
+        newExpense = response;
       }
-      // Optionally refresh the full list
-      await fetchExpenses();
-      return { success: true, data: response.expense };
-    } else {
-      throw new Error(response.message || 'Failed to add expense');
+      
+      console.log('Processed New Expense:', newExpense);
+      
+      // Add the new expense to the state immediately if we have valid data
+      if (newExpense && newExpense._id) {
+        console.log('Adding new expense to state:', newExpense);
+        setExpenses(prev => [...prev, newExpense]);
+      } else {
+        console.log('Invalid expense data, fetching all expenses instead');
+        await fetchExpenses(); // Fallback to fetching all expenses
+      }
+      
+      return { success: true, data: newExpense };
+    } catch (err) {
+      console.error('Add Expense Error:', err);
+      return { 
+        success: false, 
+        error: err.response?.data?.message || 'Failed to add expense' 
+      };
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Add Expense Error:', err);
-    return { 
-      success: false, 
-      error: err.response?.data?.message || err.message || 'Failed to add expense'
-    };
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const deleteIncome = async (id) => {
     try {
@@ -81,7 +152,11 @@ export const TransactionProvider = ({ children }) => {
       setIncomes(prev => prev.filter(income => income._id !== id));
       return { success: true };
     } catch (err) {
-      return { success: false, error: err.response?.data?.message };
+      console.error('Delete Income Error:', err);
+      return { 
+        success: false, 
+        error: err.response?.data?.message || 'Failed to delete income' 
+      };
     }
   };
 
@@ -91,7 +166,11 @@ export const TransactionProvider = ({ children }) => {
       setExpenses(prev => prev.filter(expense => expense._id !== id));
       return { success: true };
     } catch (err) {
-      return { success: false, error: err.response?.data?.message };
+      console.error('Delete Expense Error:', err);
+      return { 
+        success: false, 
+        error: err.response?.data?.message || 'Failed to delete expense' 
+      };
     }
   };
 
@@ -149,7 +228,7 @@ export const TransactionProvider = ({ children }) => {
       deleteExpense,
       fetchIncomes,
       fetchExpenses,
-      getTotals // Add getTotals to the context value
+      getTotals
     }}>
       {children}
     </TransactionContext.Provider>

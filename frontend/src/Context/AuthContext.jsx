@@ -14,9 +14,17 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         const userData = await authService.getUser();
-        setUser(userData);
+        console.log('User data from API:', userData); // Debug log
+        
+        // Make sure we're setting the user correctly
+        if (userData && userData.user) {
+          setUser(userData.user);
+        } else if (userData) {
+          setUser(userData);
+        }
       }
     } catch (err) {
+      console.error('Check Auth Error:', err);
       localStorage.removeItem('token');
       setUser(null);
     } finally {
@@ -48,7 +56,18 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const data = await authService.register(userData);
+      // Create a FormData object to properly handle file uploads
+      const formData = new FormData();
+      formData.append('username', userData.username);
+      formData.append('email', userData.email);
+      formData.append('password', userData.password);
+      
+      // Only append the file if it exists
+      if (userData.profilePicture) {
+        formData.append('profilePicture', userData.profilePicture);
+      }
+      
+      const data = await authService.register(formData);
       return { success: true, data };
     } catch (err) {
       return { success: false, error: err.response?.data?.message };
@@ -57,8 +76,25 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (userData) => {
     try {
-      const updatedUser = await authService.updateProfile(userData);
-      setUser(updatedUser);
+      // Create a FormData object to properly handle file uploads
+      const formData = new FormData();
+      formData.append('username', userData.username);
+      formData.append('email', userData.email);
+      
+      // Only append the file if it exists
+      if (userData.profilePicture) {
+        formData.append('profilePicture', userData.profilePicture);
+      }
+      
+      const updatedUser = await authService.updateProfile(formData);
+      
+      // Make sure we're setting the user correctly
+      if (updatedUser && updatedUser.user) {
+        setUser(updatedUser.user);
+      } else if (updatedUser) {
+        setUser(updatedUser);
+      }
+      
       return { success: true };
     } catch (err) {
       return { success: false, error: err.response?.data?.message };
@@ -70,9 +106,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-useEffect(() => {
+  useEffect(() => {
     checkAuth();
   }, []);
+
+  // Debug log whenever user changes
+  useEffect(() => {
+    console.log('User state updated:', user);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{
@@ -82,7 +123,8 @@ useEffect(() => {
       login,
       register,
       logout,
-      checkAuth
+      checkAuth,
+      updateProfile
     }}>
       {children}
     </AuthContext.Provider>

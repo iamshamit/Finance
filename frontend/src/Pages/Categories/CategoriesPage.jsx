@@ -7,6 +7,7 @@ import { useCategories } from '../../Context/CategoryContext';
 const CategoriesPage = () => {
   const { categories, loading, error: categoryError, addCategory, deleteCategory } = useCategories();
   const [newCategory, setNewCategory] = useState('');
+  const [categoryType, setCategoryType] = useState('expense'); // Default to expense
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState(null);
 
@@ -18,7 +19,7 @@ const CategoriesPage = () => {
     setError(null);
 
     try {
-      const result = await addCategory(newCategory.trim());
+      const result = await addCategory(newCategory.trim(), categoryType);
       console.log('Add Category Result:', result); // Debug log
 
       if (result.success) {
@@ -68,6 +69,17 @@ const CategoriesPage = () => {
               disabled={isAdding}
             />
           </div>
+          <div>
+            <select
+              value={categoryType}
+              onChange={(e) => setCategoryType(e.target.value)}
+              className="bg-[#1A231F] rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              disabled={isAdding}
+            >
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -99,6 +111,7 @@ const CategoriesPage = () => {
 
       {/* Categories List */}
       <div className="bg-[#121917] rounded-xl">
+        {console.log('Rendering categories:', categories)} {/* Debug log */}
         {loading ? (
           <div className="p-8 flex justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
@@ -128,7 +141,14 @@ const CategoriesPage = () => {
                   exit={{ opacity: 0, x: -20 }}
                   className="flex items-center justify-between p-4 hover:bg-emerald-500/5 transition-colors"
                 >
-                  <span className="font-medium">{category.name}</span>
+                  <div>
+                    <span className="font-medium">{category.name}</span>
+                    <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                      category.type === 'income' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                    }`}>
+                      {category.type}
+                    </span>
+                  </div>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}

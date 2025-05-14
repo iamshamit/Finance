@@ -31,7 +31,7 @@ const transactionRoutes = require('./routes/transactionRoutes');
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/categories', categoryRoutes);
-app.use('/api/v1/transactions', transactionRoutes);
+app.use('/api/v1', transactionRoutes);
 
 // ... rest of your server.js code
 

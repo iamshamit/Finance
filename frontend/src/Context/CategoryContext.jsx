@@ -14,7 +14,12 @@ export const CategoryProvider = ({ children }) => {
       setLoading(true);
       const response = await categoryService.getCategories();
       console.log('Fetch Categories Response:', response);
-      setCategories(Array.isArray(response) ? response : []);
+      
+      // Extract the categories array from the response
+      const categoriesData = response.categories || [];
+      console.log('Categories Data:', categoriesData);
+      
+      setCategories(categoriesData);
       setError(null);
     } catch (err) {
       console.error('Fetch Categories Error:', err);
@@ -25,18 +30,16 @@ export const CategoryProvider = ({ children }) => {
     }
   };
 
-  const addCategory = async (name) => {
+  const addCategory = async (name, type = 'expense') => {
     try {
       setLoading(true);
-      const response = await categoryService.addCategory({ name });
+      const response = await categoryService.addCategory({ name, type });
       console.log('Add Category Response in Context:', response);
 
-      // Handle different possible response structures
-      const newCategory = response.category || response;
+      // Refresh the categories list
+      await fetchCategories();
       
-      setCategories(prev => [...prev, newCategory]);
-      await fetchCategories(); // Refresh the categories list
-      return { success: true, data: newCategory };
+      return { success: true, data: response.category || response };
     } catch (err) {
       console.error('Add Category Error in Context:', err);
       return { 
@@ -52,8 +55,10 @@ export const CategoryProvider = ({ children }) => {
     try {
       setLoading(true);
       await categoryService.deleteCategory(id);
-      setCategories(prev => prev.filter(cat => cat._id !== id));
-      await fetchCategories(); // Refresh the categories list
+      
+      // Refresh the categories list
+      await fetchCategories();
+      
       return { success: true };
     } catch (err) {
       console.error('Delete Category Error:', err);

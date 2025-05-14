@@ -1,8 +1,46 @@
 // src/components/Layout/Header.jsx
+import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../Context/AuthContext';
 
 const Header = ({ toggleSidebar, isSidebarOpen, isMobile }) => {
+  const { user } = useAuth();
+  const [imageError, setImageError] = useState(false);
+  
+  // Debug log
+  useEffect(() => {
+    console.log('Header component - User:', user);
+    if (user && user.profilePicture) {
+      console.log('Profile Picture URL:', user.profilePicture);
+    }
+  }, [user]);
+  
+  // Reset image error when user changes
+  useEffect(() => {
+    setImageError(false);
+  }, [user]);
+  
+  // Get user initials safely
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    if (!user.username) return 'U';
+    return user.username.substring(0, 2).toUpperCase();
+  };
+  
+  // Check if we should show the profile picture
+  const shouldShowProfilePicture = () => {
+    return (
+      !imageError && 
+      user && 
+      user.profilePicture && 
+      typeof user.profilePicture === 'string' &&
+      user.profilePicture.trim() !== '' && 
+      user.profilePicture !== 'undefined' &&
+      user.profilePicture !== 'null'
+    );
+  };
+  
   return (
     <motion.header 
       initial={{ y: -20, opacity: 0 }}
@@ -33,9 +71,23 @@ const Header = ({ toggleSidebar, isSidebarOpen, isMobile }) => {
         <motion.div 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center cursor-pointer hover:bg-emerald-500/30 transition-all"
+          className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center cursor-pointer hover:bg-emerald-500/30 transition-all overflow-hidden"
         >
-          <span className="text-emerald-500 font-medium text-sm md:text-base">JD</span>
+          {shouldShowProfilePicture() ? (
+            <img 
+              src={user.profilePicture}
+              alt={user.username || 'User'} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Image failed to load:', e);
+                setImageError(true);
+              }}
+            />
+          ) : (
+            <span className="text-emerald-500 font-medium text-sm md:text-base">
+              {getUserInitials()}
+            </span>
+          )}
         </motion.div>
       </div>
     </motion.header>

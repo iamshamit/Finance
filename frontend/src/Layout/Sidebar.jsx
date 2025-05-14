@@ -28,6 +28,11 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
     window.location.href = '/login';
   };
 
+  // Consistent icon size for all navigation items and logout
+  const getIconSize = () => {
+    return !isOpen && !isMobile ? 'w-5 h-5' : 'w-5 h-5';
+  };
+
   return (
     <motion.div
       initial={{ width: isOpen ? 240 : 80, x: isMobile ? -240 : 0 }}
@@ -47,9 +52,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
-          <Wallet className={`transition-all ${
-            !isOpen && !isMobile ? 'w-9 h-9' : 'w-8 h-8'
-          } text-emerald-500`} />
+          <Wallet className="w-6 h-6 text-emerald-500" />
         </motion.div>
         <AnimatePresence>
           {isOpen && (
@@ -83,9 +86,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
                   : 'hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-500'
               }`}
             >
-              <item.icon className={`transition-all ${
-                !isOpen && !isMobile ? 'w-6 h-6' : 'w-5 h-5'
-              }`} />
+              <item.icon className={getIconSize()} />
               <AnimatePresence>
                 {isOpen && (
                   <motion.span
@@ -142,9 +143,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
           onClick={handleLogout}
           className="flex items-center gap-2 px-4 py-3 rounded-xl w-full hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-all"
         >
-          <LogOut className={`transition-all ${
-            !isOpen && !isMobile ? 'w-6 h-6' : 'w-5 h-5'
-          }`} />
+          <LogOut className={getIconSize()} />
           {isOpen && (
             <motion.span
               initial={{ opacity: 0 }}

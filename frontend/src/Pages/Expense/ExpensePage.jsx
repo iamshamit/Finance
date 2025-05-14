@@ -1,5 +1,5 @@
 // src/Pages/Expense/ExpensePage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingDown, DollarSign } from 'lucide-react';
 import { useTransactions } from '../../Context/TransactionContext';
@@ -11,8 +11,58 @@ import TransactionFilters from '../../components/Transactions/TransactionFilters
 const ExpensePage = () => {
   const { expenses, loading, error: expenseError, addExpense, deleteExpense, getTotals } = useTransactions();
   const [isAdding, setIsAdding] = useState(false);
-  const [filteredExpenses, setFilteredExpenses] = useState(expenses);
+  const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    search: "",
+    startDate: "",
+    endDate: "",
+    sortBy: "date"
+  });
+
+  // Update filteredExpenses whenever expenses or filters change
+  useEffect(() => {
+    console.log("Expenses updated:", expenses);
+    applyFilters();
+  }, [expenses, filters]);
+
+  const applyFilters = () => {
+    let filtered = [...expenses];
+
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(expense => 
+        expense.title.toLowerCase().includes(searchTerm) ||
+        expense.description?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (filters.startDate) {
+      filtered = filtered.filter(expense => 
+        new Date(expense.date) >= new Date(filters.startDate)
+      );
+    }
+    if (filters.endDate) {
+      filtered = filtered.filter(expense => 
+        new Date(expense.date) <= new Date(filters.endDate)
+      );
+    }
+
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'date':
+          return new Date(b.date) - new Date(a.date);
+        case 'amount':
+          return b.amount - a.amount;
+        case 'title':
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredExpenses(filtered);
+  };
 
   const handleAddExpense = async (formData) => {
     try {
@@ -78,42 +128,8 @@ const ExpensePage = () => {
     }
   };
 
-  const handleFilterChange = (filters) => {
-    let filtered = [...expenses];
-
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      filtered = filtered.filter(expense => 
-        expense.title.toLowerCase().includes(searchTerm) ||
-        expense.description?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    if (filters.startDate) {
-      filtered = filtered.filter(expense => 
-        new Date(expense.date) >= new Date(filters.startDate)
-      );
-    }
-    if (filters.endDate) {
-      filtered = filtered.filter(expense => 
-        new Date(expense.date) <= new Date(filters.endDate)
-      );
-    }
-
-    filtered.sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'date':
-          return new Date(b.date) - new Date(a.date);
-        case 'amount':
-          return b.amount - a.amount;
-        case 'title':
-          return a.title.localeCompare(b.title);
-        default:
-          return 0;
-      }
-    });
-
-    setFilteredExpenses(filtered);
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
   };
 
   return (
@@ -125,9 +141,6 @@ const ExpensePage = () => {
 
       {/* Expense Stats */}
       <TransactionStats transactions={expenses} type="expense" />
-
-      {/* Expense Filters */}
-      <TransactionFilters onFilterChange={handleFilterChange} />
 
       {/* Add Expense Form */}
       <div className="mb-8">
@@ -148,6 +161,9 @@ const ExpensePage = () => {
           {error}
         </motion.div>
       )}
+
+      {/* Expense Filters */}
+      <TransactionFilters onFilterChange={handleFilterChange} />
 
       {/* Expense List */}
       <TransactionList

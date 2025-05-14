@@ -9,8 +9,8 @@ import LoginPage from './Pages/Auth/LoginPage';
 import RegisterPage from './Pages/Auth/RegisterPage';
 import LandingPage from './Pages/Auth/LandingPage';
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
+// Protected Route Component with Data Providers
+const ProtectedRouteWithProviders = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -25,7 +25,14 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  // Only load data providers when user is authenticated
+  return (
+    <CategoryProvider>
+      <TransactionProvider>
+        {children}
+      </TransactionProvider>
+    </CategoryProvider>
+  );
 };
 
 // Public Route Component
@@ -51,50 +58,46 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <CategoryProvider>
-          <TransactionProvider>
-            <Routes>
-              {/* Public Routes */}
-              <Route 
-                path="/" 
-                element={
-                  <PublicRoute>
-                    <LandingPage />
-                  </PublicRoute>
-                } 
-              />
-              <Route 
-                path="/login" 
-                element={
-                  <PublicRoute>
-                    <LoginPage />
-                  </PublicRoute>
-                } 
-              />
-              <Route 
-                path="/register" 
-                element={
-                  <PublicRoute>
-                    <RegisterPage />
-                  </PublicRoute>
-                } 
-              />
+        <Routes>
+          {/* Public Routes */}
+          <Route 
+            path="/" 
+            element={
+              <PublicRoute>
+                <LandingPage />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/login" 
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            } 
+          />
 
-              {/* Protected Dashboard Routes */}
-              <Route
-                path="/dashboard/*"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout />
-                  </ProtectedRoute>
-                }
-              />
+          {/* Protected Dashboard Routes */}
+          <Route
+            path="/dashboard/*"
+            element={
+              <ProtectedRouteWithProviders>
+                <DashboardLayout />
+              </ProtectedRouteWithProviders>
+            }
+          />
 
-              {/* Catch all route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </TransactionProvider>
-        </CategoryProvider>
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </AuthProvider>
     </BrowserRouter>
   );

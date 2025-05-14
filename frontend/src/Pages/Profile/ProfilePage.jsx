@@ -15,12 +15,11 @@ import {
   Save,
   AlertTriangle
 } from 'lucide-react';
-import axios from 'axios';
+import { useAuth } from '../../Context/AuthContext';
 import { usePreventNavigation } from '../../hooks/usePreventNavigation';
 
 const ProfilePage = () => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading, updateProfile } = useAuth();
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -48,32 +47,25 @@ const ProfilePage = () => {
   const { showPrompt, handleConfirmNavigation, handleCancelNavigation } = 
     usePreventNavigation(hasUnsavedChanges);
 
+  // Initialize form data when user data is available
   useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  const fetchUserProfile = async () => {
-    try {
-      const response = await axios.get('/api/v1/auth/user');
-      setUser(response.data);
+    if (user) {
+      console.log('Setting up form with user data:', user);
       const userData = {
-        username: response.data.username,
-        email: response.data.email,
+        username: user.username || '',
+        email: user.email || '',
         password: '',
         newPassword: '',
         profilePicture: null
       };
       setFormData(userData);
       setOriginalData(userData);
-      if (response.data.profilePicture) {
-        setPreviewUrl(response.data.profilePicture);
+      
+      if (user.profilePicture) {
+        setPreviewUrl(user.profilePicture);
       }
-    } catch (err) {
-      setError('Failed to fetch user profile');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [user]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -94,44 +86,60 @@ const ProfilePage = () => {
     setUpdating(true);
 
     try {
-      const formDataToSend = new FormData();
-      if (formData.username !== originalData.username) {
-        formDataToSend.append('username', formData.username);
-      }
-      if (formData.email !== originalData.email) {
-        formDataToSend.append('email', formData.email);
-      }
+      // Prepare update data
+      const updateData = {
+        username: formData.username,
+        email: formData.email,
+        profilePicture: formData.profilePicture
+      };
+      
+      // Add password fields if provided
       if (formData.password && formData.newPassword) {
-        formDataToSend.append('currentPassword', formData.password);
-        formDataToSend.append('newPassword', formData.newPassword);
-      }
-      if (formData.profilePicture) {
-        formDataToSend.append('profilePicture', formData.profilePicture);
+        updateData.currentPassword = formData.password;
+        updateData.newPassword = formData.newPassword;
       }
 
-      await axios.put('/api/v1/auth/update-profile', formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      setSuccess('Profile updated successfully');
-      await fetchUserProfile();
-      setIsEditing(false);
+      // Use the updateProfile function from AuthContext
+      const result = await updateProfile(updateData);
+      
+      if (result.success) {
+        setSuccess('Profile updated successfully');
+        setIsEditing(false);
+        
+        // Reset password fields
+        setFormData(prev => ({
+          ...prev,
+          password: '',
+          newPassword: '',
+          profilePicture: null
+        }));
+      } else {
+        throw new Error(result.error || 'Failed to update profile');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update profile');
+      setError(err.message || 'Failed to update profile');
     } finally {
       setUpdating(false);
     }
   };
 
   const handleDiscard = () => {
-    setFormData(originalData);
-    setPreviewUrl(user.profilePicture);
+    if (user) {
+      setFormData({
+        username: user.username || '',
+        email: user.email || '',
+        password: '',
+        newPassword: '',
+        profilePicture: null
+      });
+      setPreviewUrl(user.profilePicture);
+    }
     setIsEditing(false);
     setError(null);
     setSuccess(null);
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
@@ -172,9 +180,14 @@ const ProfilePage = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSubmit}
-                className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg flex items-center gap-2"
+                disabled={updating}
+                className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="w-4 h-4" />
+                {updating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
                 Save Changes
               </motion.button>
             </div>
@@ -186,7 +199,35 @@ const ProfilePage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-[#121917] rounded-xl p-6"
         >
-          {/* ... (Previous alert messages code remains the same) ... */}
+          {/* Success Message */}
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-emerald-500/10 border border-emerald-500 text-emerald-500 px-4 py-2 rounded-lg mb-6 flex items-center gap-2"
+              >
+                <CheckCircle className="w-5 h-5" />
+                {success}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Error Message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded-lg mb-6 flex items-center gap-2"
+              >
+                <AlertCircle className="w-5 h-5" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Picture */}
@@ -238,7 +279,7 @@ const ProfilePage = () => {
               return (
                 <div key={key}>
                   <label className="block text-gray-400 mb-2">
-                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                    {key === 'newPassword' ? 'New Password' : key.charAt(0).toUpperCase() + key.slice(1)}
                   </label>
                   <div className="relative">
                     <Icon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -247,7 +288,7 @@ const ProfilePage = () => {
                       value={value}
                       onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
                       className="w-full bg-[#1A231F] rounded-lg py-3 px-10 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder={`Enter ${key}`}
+                      placeholder={`Enter ${key === 'newPassword' ? 'new password' : key}`}
                       disabled={!isEditing}
                     />
                   </div>

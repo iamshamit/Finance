@@ -15,46 +15,49 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
   });
   const [error, setError] = useState(null);
 
+  // Filter categories based on the current transaction type
+  const filteredCategories = categories.filter(category => category.type === type);
+
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError(null);
+    e.preventDefault();
+    setError(null);
 
-  // Validate required fields
-  if (!formData.title || !formData.amount || !formData.category || !formData.date || !formData.description) {
-    setError('Please fill in all required fields');
-    return;
-  }
-
-  // Validate amount
-  const amount = parseFloat(formData.amount);
-  if (isNaN(amount) || amount <= 0) {
-    setError('Amount must be a positive number');
-    return;
-  }
-
-  try {
-    const result = await onSubmit({
-      ...formData,
-      amount: amount
-    });
-
-    if (result.success) {
-      // Reset form
-      setFormData({
-        title: '',
-        amount: '',
-        category: '',
-        description: '',
-        date: new Date().toISOString().split('T')[0]
-      });
-    } else {
-      setError(result.error);
+    // Validate required fields
+    if (!formData.title || !formData.amount || !formData.category || !formData.date || !formData.description) {
+      setError('Please fill in all required fields');
+      return;
     }
-  } catch (err) {
-    setError('An unexpected error occurred');
-    console.error('Form submission error:', err);
-  }
-};
+
+    // Validate amount
+    const amount = parseFloat(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      setError('Amount must be a positive number');
+      return;
+    }
+
+    try {
+      const result = await onSubmit({
+        ...formData,
+        amount: amount
+      });
+
+      if (result.success) {
+        // Reset form
+        setFormData({
+          title: '',
+          amount: '',
+          category: '',
+          description: '',
+          date: new Date().toISOString().split('T')[0]
+        });
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+      console.error('Form submission error:', err);
+    }
+  };
 
   return (
     <motion.form
@@ -122,11 +125,17 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
               required
             >
               <option value="">Select category</option>
-              {categories.map((category) => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
+              {filteredCategories.length > 0 ? (
+                filteredCategories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>
+                  No {type} categories available. Please create one first.
                 </option>
-              ))}
+              )}
             </select>
           </div>
         </div>
@@ -160,7 +169,7 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         type="submit"
-        disabled={isLoading}
+        disabled={isLoading || filteredCategories.length === 0}
         className="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
@@ -171,6 +180,17 @@ const TransactionForm = ({ onSubmit, type, isLoading }) => {
           </>
         )}
       </motion.button>
+
+      {filteredCategories.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-4 bg-amber-500/10 border border-amber-500 text-amber-500 px-4 py-2 rounded-lg flex items-center gap-2"
+        >
+          <AlertCircle className="w-4 h-4" />
+          No {type} categories available. Please create a category first.
+        </motion.div>
+      )}
     </motion.form>
   );
 };
