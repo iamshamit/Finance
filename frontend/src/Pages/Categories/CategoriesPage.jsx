@@ -8,11 +8,13 @@ import {
   Trash2, 
   AlertCircle, 
   ChevronDown, 
-  Edit2, 
   Eye,
   ArrowRight,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  AlertTriangle,
+  X,
+  Check
 } from 'lucide-react';
 import { useCategories } from '../../Context/CategoryContext';
 import { useTransactions } from '../../Context/TransactionContext';
@@ -28,6 +30,12 @@ const CategoriesPage = () => {
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    categoryId: null,
+    categoryName: '',
+    isDeleting: false
+  });
 
   // Get transactions for the selected category
   const getCategoryTransactions = (categoryId) => {
@@ -59,16 +67,38 @@ const CategoriesPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      const result = await deleteCategory(id);
+  const openDeleteConfirmation = (category) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      categoryId: category._id,
+      categoryName: category.name,
+      isDeleting: false
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      categoryId: null,
+      categoryName: '',
+      isDeleting: false
+    });
+  };
+
+  const handleDelete = async () => {
+    try {
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
+      const result = await deleteCategory(deleteConfirmation.categoryId);
+      
       if (!result.success) {
         setError(result.error);
       }
-      // Close the transaction view if the deleted category was selected
-      if (selectedCategory && selectedCategory._id === id) {
-        setSelectedCategory(null);
-      }
+      
+      // Close the confirmation dialog
+      closeDeleteConfirmation();
+    } catch (err) {
+      setError('Failed to delete category');
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
     }
   };
 
@@ -123,35 +153,37 @@ const CategoriesPage = () => {
               <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </div>
             
-            {dropdownOpen && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute z-10 mt-1 w-full bg-[#1A231F] rounded-lg shadow-lg overflow-hidden"
-              >
-                <div 
-                  className={`py-2 px-4 cursor-pointer flex items-center gap-2 ${categoryType === 'expense' ? 'bg-[#121917]' : 'hover:bg-[#121917]'}`}
-                  onClick={() => {
-                    setCategoryType('expense');
-                    setDropdownOpen(false);
-                  }}
+            <AnimatePresence>
+              {dropdownOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute z-10 mt-1 w-full bg-[#1A231F] rounded-lg shadow-lg overflow-hidden"
                 >
-                  <TrendingDown className="w-4 h-4 text-red-500" />
-                  <span>Expense</span>
-                </div>
-                <div 
-                  className={`py-2 px-4 cursor-pointer flex items-center gap-2 ${categoryType === 'income' ? 'bg-[#121917]' : 'hover:bg-[#121917]'}`}
-                  onClick={() => {
-                    setCategoryType('income');
-                    setDropdownOpen(false);
-                  }}
-                >
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  <span>Income</span>
-                </div>
-              </motion.div>
-            )}
+                  <div 
+                    className={`py-2 px-4 cursor-pointer flex items-center gap-2 ${categoryType === 'expense' ? 'bg-[#121917]' : 'hover:bg-[#121917]'}`}
+                    onClick={() => {
+                      setCategoryType('expense');
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <TrendingDown className="w-4 h-4 text-red-500" />
+                    <span>Expense</span>
+                  </div>
+                  <div 
+                    className={`py-2 px-4 cursor-pointer flex items-center gap-2 ${categoryType === 'income' ? 'bg-[#121917]' : 'hover:bg-[#121917]'}`}
+                    onClick={() => {
+                      setCategoryType('income');
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
+                    <span>Income</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           
           <motion.button
@@ -236,7 +268,7 @@ const CategoriesPage = () => {
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => handleDelete(category._id)}
+                        onClick={() => openDeleteConfirmation(category)}
                         className="text-red-500 hover:text-red-600 p-2"
                         title="Delete category"
                       >
@@ -307,6 +339,69 @@ const CategoriesPage = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+<AnimatePresence>
+  {deleteConfirmation.isOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      onClick={closeDeleteConfirmation}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-[#121917] rounded-xl p-6 max-w-md w-full shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 text-red-500 mb-4">
+          <AlertTriangle className="w-6 h-6" />
+          <h3 className="text-lg font-semibold">Delete Category</h3>
+        </div>
+        
+        <p className="text-gray-300 mb-6">
+          Are you sure you want to delete <span className="font-semibold text-white">{deleteConfirmation.categoryName}</span>? This action cannot be undone.
+          {getCategoryTransactions(deleteConfirmation.categoryId)?.length > 0 && (
+            <span className="block mt-2 text-amber-400">
+              Warning: This category has {getCategoryTransactions(deleteConfirmation.categoryId).length} associated transactions.
+            </span>
+          )}
+        </p>
+        
+        <div className="flex gap-3 justify-end">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={closeDeleteConfirmation}
+            className="px-4 py-2 rounded-lg bg-[#1A231F] hover:bg-[#232D29] text-gray-300 flex items-center gap-2"
+            disabled={deleteConfirmation.isDeleting}
+          >
+            <X className="w-4 h-4" />
+            Cancel
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleDelete}
+            className="px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-500 flex items-center gap-2"
+            disabled={deleteConfirmation.isDeleting}
+          >
+            {deleteConfirmation.isDeleting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+            {deleteConfirmation.isDeleting ? 'Deleting...' : 'Delete'}
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
     </div>
   );
 };

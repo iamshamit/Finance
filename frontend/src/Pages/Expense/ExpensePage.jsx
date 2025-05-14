@@ -1,12 +1,12 @@
-// src/Pages/Expense/ExpensePage.jsx
+// For ExpensePage.jsx
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingDown, DollarSign } from 'lucide-react';
 import { useTransactions } from '../../Context/TransactionContext';
 import TransactionForm from '../../components/Transactions/TransactionForm';
 import TransactionList from '../../components/Transactions/TransactionList';
 import TransactionStats from '../../components/Transactions/TransactionStats';
 import TransactionFilters from '../../components/Transactions/TransactionFilters';
+import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
 
 const ExpensePage = () => {
   const { expenses, loading, error: expenseError, addExpense, deleteExpense, getTotals } = useTransactions();
@@ -19,10 +19,15 @@ const ExpensePage = () => {
     endDate: "",
     sortBy: "date"
   });
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    transactionId: null,
+    transactionTitle: '',
+    isDeleting: false
+  });
 
   // Update filteredExpenses whenever expenses or filters change
   useEffect(() => {
-   
     applyFilters();
   }, [expenses, filters]);
 
@@ -97,7 +102,6 @@ const ExpensePage = () => {
 
       // Submit expense
       const response = await addExpense(expenseData);
-     
 
       if (response.success) {
         return { success: true };
@@ -105,7 +109,6 @@ const ExpensePage = () => {
         throw new Error(response.error || 'Failed to add expense');
       }
     } catch (err) {
-     
       return { 
         success: false, 
         error: err.message || 'Failed to add expense' 
@@ -115,16 +118,38 @@ const ExpensePage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this expense?')) {
-      try {
-        const result = await deleteExpense(id);
-        if (!result.success) {
-          setError(result.error);
-        }
-      } catch (err) {
-        setError('Failed to delete expense');
+  const openDeleteConfirmation = (transaction) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      transactionId: transaction._id,
+      transactionTitle: transaction.title,
+      isDeleting: false
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      transactionId: null,
+      transactionTitle: '',
+      isDeleting: false
+    });
+  };
+
+  const handleDelete = async () => {
+    try {
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
+      const result = await deleteExpense(deleteConfirmation.transactionId);
+      
+      if (!result.success) {
+        setError(result.error);
       }
+      
+      // Close the confirmation dialog
+      closeDeleteConfirmation();
+    } catch (err) {
+      setError('Failed to delete expense');
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
     }
   };
 
@@ -141,6 +166,9 @@ const ExpensePage = () => {
 
       {/* Expense Stats */}
       <TransactionStats transactions={expenses} type="expense" />
+
+      {/* Expense Filters */}
+      <TransactionFilters onFilterChange={handleFilterChange} />
 
       {/* Add Expense Form */}
       <div className="mb-8">
@@ -162,16 +190,24 @@ const ExpensePage = () => {
         </motion.div>
       )}
 
-      {/* Expense Filters */}
-      <TransactionFilters onFilterChange={handleFilterChange} />
-
       {/* Expense List */}
       <TransactionList
         transactions={filteredExpenses}
-        onDelete={handleDelete}
+        onDelete={openDeleteConfirmation}
         loading={loading}
         error={expenseError}
         type="expense"
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={handleDelete}
+        title="Delete Expense"
+        itemName={<span className="font-semibold text-white">{deleteConfirmation.transactionTitle}</span>}
+        itemType="expense"
+        isDeleting={deleteConfirmation.isDeleting}
       />
     </div>
   );
