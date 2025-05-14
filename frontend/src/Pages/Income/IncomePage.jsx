@@ -1,5 +1,5 @@
 // For IncomePage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTransactions } from "../../Context/TransactionContext";
 import TransactionForm from "../../components/Transactions/TransactionForm";
 import TransactionList from "../../components/Transactions/TransactionList";
