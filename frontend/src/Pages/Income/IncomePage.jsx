@@ -38,13 +38,20 @@ const IncomePage = () => {
   };
 
   const openDeleteConfirmation = (transaction) => {
-    setDeleteConfirmation({
-      isOpen: true,
-      transactionId: transaction._id,
-      transactionTitle: transaction.title,
-      isDeleting: false
-    });
-  };
+  // Validate that we have a transaction with an ID
+  if (!transaction || !transaction._id) {
+    console.error("Invalid transaction object:", transaction);
+    setError("Cannot delete: Invalid transaction data");
+    return;
+  }
+  
+  setDeleteConfirmation({
+    isOpen: true,
+    transactionId: transaction._id,
+    transactionTitle: transaction.title || 'this income',
+    isDeleting: false
+  });
+};
 
   const closeDeleteConfirmation = () => {
     setDeleteConfirmation({
@@ -56,21 +63,29 @@ const IncomePage = () => {
   };
 
   const handleDelete = async () => {
-    try {
-      setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
-      const result = await deleteIncome(deleteConfirmation.transactionId);
-      
-      if (!result.success) {
-        setError(result.error);
-      }
-      
-      // Close the confirmation dialog
+  try {
+    // Validate transaction ID before attempting to delete
+    if (!deleteConfirmation.transactionId) {
+      setError("Cannot delete: Missing transaction ID");
       closeDeleteConfirmation();
-    } catch (err) {
-      setError('Failed to delete income');
-      setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
+      return;
     }
-  };
+    
+    setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
+    const result = await deleteIncome(deleteConfirmation.transactionId); // or deleteExpense
+    
+    if (!result.success) {
+      setError(result.error);
+    }
+    
+    // Close the confirmation dialog
+    closeDeleteConfirmation();
+  } catch (err) {
+    console.error("Delete error:", err);
+    setError('Failed to delete income'); // or 'Failed to delete expense'
+    setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
+  }
+};
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
