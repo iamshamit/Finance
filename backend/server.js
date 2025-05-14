@@ -8,8 +8,21 @@ require('dotenv').config();
 const app = express();
 
 // CORS Configuration
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',') 
+  : ['http://localhost:5173', 'https://iamshamit-spendwise.vercel.app'];
+
 app.use(cors({
-  origin: 'http://localhost:5173', // or whatever your frontend URL is
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -33,13 +46,13 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1', transactionRoutes);
 
-// ... rest of your server.js code
-
 // Health check route
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     message: 'Server is running',
+    environment: process.env.NODE_ENV || 'development',
+    allowedOrigins: allowedOrigins,
     mongoConnection: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
