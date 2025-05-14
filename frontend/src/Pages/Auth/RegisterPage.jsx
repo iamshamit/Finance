@@ -1,7 +1,7 @@
 // src/Pages/Auth/RegisterPage.jsx
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Upload, Wallet, ArrowRight, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { Mail, Lock, User, Upload, Wallet, ArrowRight, ChevronRight, Image as ImageIcon, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext';
 
@@ -37,7 +37,7 @@ const RegisterPage = () => {
     }
   };
 
-  const handleDrag = (e) => {
+    const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -374,6 +374,27 @@ const RegisterPage = () => {
               >
                 <ChevronRight className="w-4 h-4" />
               </motion.span>
+            </Link>
+          </motion.div>
+          
+          {/* Back to Home Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mt-6 text-center"
+          >
+            <Link 
+              to="/" 
+              className="inline-flex items-center gap-2 text-gray-400 hover:text-emerald-400 transition-colors"
+            >
+              <motion.div
+                animate={{ x: [0, -5, 0] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </motion.div>
+              <span>Back to Home</span>
             </Link>
           </motion.div>
         </motion.div>
