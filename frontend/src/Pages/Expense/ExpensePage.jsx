@@ -119,17 +119,21 @@ const ExpensePage = () => {
   };
 
   const openDeleteConfirmation = (transaction) => {
-  // Validate that we have a transaction with an ID
-  if (!transaction || !transaction._id) {
-    console.error("Invalid transaction object:", transaction);
+  // Check if transaction is a string (ID) or an object
+  const transactionId = typeof transaction === 'string' ? transaction : transaction?._id;
+  const transactionTitle = typeof transaction === 'string' ? 'this expense' : transaction?.title || 'this expense';
+  
+  // Validate that we have a valid ID
+  if (!transactionId) {
+    console.error("Invalid transaction data:", transaction);
     setError("Cannot delete: Invalid transaction data");
     return;
   }
   
   setDeleteConfirmation({
     isOpen: true,
-    transactionId: transaction._id,
-    transactionTitle: transaction.title || 'this expense',
+    transactionId: transactionId,
+    transactionTitle: transactionTitle,
     isDeleting: false
   });
 };
