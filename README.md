@@ -1,6 +1,6 @@
 # SpendWise - Personal Finance Tracker
 
-![SpendWise Banner](https://i.imgur.com/placeholder-image.png)
+![SpendWise Banner](https://files.catbox.moe/4wo2ed.png)
 
 ## 🚀 Overview
 
