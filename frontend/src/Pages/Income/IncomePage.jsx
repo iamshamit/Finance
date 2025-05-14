@@ -55,10 +55,10 @@ const IncomePage = () => {
     });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (id) => {
     try {
       setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
-      const result = await deleteIncome(deleteConfirmation.transactionId);
+      const result = await deleteIncome(id);
       
       if (!result.success) {
         setError(result.error);
