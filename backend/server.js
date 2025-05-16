@@ -46,6 +46,12 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/alive', (req, res) => {
+  res.json({
+    status: 'OK',
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
