@@ -9,7 +9,7 @@ const app = express();
 
 // Alternative CORS configuration
 const corsOptions = {
-  origin: ['http://localhost:5173', 'https://iamshamit-spendwise.vercel.app'],
+  origin: ['http://localhost:5173', 'https://iamshamit-spendwise.vercel.app', 'https://spendwise.iamshamit.xyz'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
